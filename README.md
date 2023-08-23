@@ -29,6 +29,10 @@ Why do you use the vanilla empty map?
 
 Why doesn't it do anything when I use the map?
 * I added one more thing to the map creation, that is dimension specification. You may see what dimension is a map for by hovering it in your inventory, as a tooltip. If you are not in the matching dimension when using the map, look forward to seeing a red "x" temporarily appear over your hotbar, and your action not doing anything.
+* Additionally, a blue "x" means that the structure couldn't be found for some other reason. Thus meaning that there either is no such structure in that dimension, or none in search range.
 
 Why didn't you just name it "BetterMaps"?
 * Because it sounds cool.
+
+What happens if I remove the mod?
+* This mod works hand in hand with vanilla Minecraft, but only change the latter's behavior when loaded. Thus, if you remove the mod, using a special "empty map" created by the mod would only make the game behave as normal with a regular empty map.
