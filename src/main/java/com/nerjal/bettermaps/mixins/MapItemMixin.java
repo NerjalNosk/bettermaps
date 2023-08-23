@@ -43,8 +43,9 @@ public class MapItemMixin {
         ServerWorld world = (ServerWorld) w;
         ItemStack stack = user.getStackInHand(hand);
         if (stack.isEmpty()) return;
-        NbtCompound nbt = stack.getNbt().copy();
+        NbtCompound nbt = stack.getNbt();
         if (nbt == null) return;
+        nbt = nbt.copy();
         if (! nbt.contains(Bettermaps.NBT_IS_BETTER_MAP, NbtElement.BYTE_TYPE)) return;
         if (! nbt.getBoolean(Bettermaps.NBT_IS_BETTER_MAP)) return;
         if (! nbt.contains(Bettermaps.NBT_EXPLORATION_DATA, NbtElement.COMPOUND_TYPE)) return;
