@@ -72,6 +72,13 @@ public class MapItemMixin {
         }
         BlockPos blockPos = world.locateStructure(destination, new BlockPos(pos), radius, skip);
 
+        if (blockPos == null) {
+            user.sendMessage(Text.literal("x").formatted(Formatting.BLUE, Formatting.BOLD), true);
+            cir.setReturnValue(TypedActionResult.consume(stack));
+            cir.cancel();
+            return;
+        }
+
         // map data
         byte zoom = explorationNbt.getByte("zoom");
         MapIcon.Type decoration = MapIcon.Type.byId(explorationNbt.getByte(Bettermaps.NBT_EXPLORATION_ICON));
