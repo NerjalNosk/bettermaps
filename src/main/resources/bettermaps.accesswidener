@@ -2,6 +2,3 @@ accessWidener	v1	named
 
 # Require access to boolean gamerule instantiation method
 accessible method net/minecraft/world/GameRules$BooleanRule create (Z)Lnet/minecraft/world/GameRules$Type;
-
-# Require access to RegistryKey constructor for dimension key instantiation
-accessible method net/minecraft/util/registry/RegistryKey <init> (Lnet/minecraft/util/Identifier;Lnet/minecraft/util/Identifier;)V

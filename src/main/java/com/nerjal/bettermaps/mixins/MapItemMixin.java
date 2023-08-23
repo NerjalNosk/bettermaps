@@ -9,8 +9,9 @@ import net.minecraft.item.map.MapIcon;
 import net.minecraft.item.map.MapState;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.tag.TagKey;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -18,10 +19,9 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.Structure;
-import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -43,8 +43,9 @@ public class MapItemMixin {
         ServerWorld world = (ServerWorld) w;
         ItemStack stack = user.getStackInHand(hand);
         if (stack.isEmpty()) return;
-        NbtCompound nbt = stack.getNbt().copy();
+        NbtCompound nbt = stack.getNbt();
         if (nbt == null) return;
+        nbt = nbt.copy();
         if (! nbt.contains(Bettermaps.NBT_IS_BETTER_MAP, NbtElement.BYTE_TYPE)) return;
         if (! nbt.getBoolean(Bettermaps.NBT_IS_BETTER_MAP)) return;
         if (! nbt.contains(Bettermaps.NBT_EXPLORATION_DATA, NbtElement.COMPOUND_TYPE)) return;
@@ -54,13 +55,14 @@ public class MapItemMixin {
         // locate
         int radius = explorationNbt.getInt(Bettermaps.NBT_EXPLORATION_RADIUS);
         boolean skip = explorationNbt.getBoolean(Bettermaps.NBT_EXPLORATION_SKIP);
-        Vec3d pos = user.getPos();
+        Vec3d p = user.getPos();
+        Vec3i pos = new Vec3i((int) p.x, (int) p.y, (int) p.z);
 
         Identifier destId = Identifier.tryParse(explorationNbt.getString(Bettermaps.NBT_EXPLORATION_DEST));
-        TagKey<Structure> destination = TagKey.of(Registry.STRUCTURE_KEY, destId);
+        TagKey<Structure> destination = TagKey.of(RegistryKeys.STRUCTURE, destId);
         NbtCompound posNbt = nbt.getCompound(Bettermaps.NBT_POS_DATA);
         if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_FROM_PLAYER_POS))) {
-            pos = new Vec3d(posNbt.getDouble("x"), posNbt.getDouble("y"), posNbt.getDouble("z"));
+            pos = new Vec3i(posNbt.getInt("x"), posNbt.getInt("y"), posNbt.getInt("z"));
         }
         if (!world.getDimensionKey().getValue().toString().equals(posNbt.getString(Bettermaps.NBT_EXPLORATION_DIM))) {
             user.sendMessage(Text.literal("x").formatted(Formatting.RED, Formatting.BOLD), true);

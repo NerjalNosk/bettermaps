@@ -10,7 +10,7 @@ import net.minecraft.loot.function.ExplorationMapLootFunction;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
-import net.minecraft.tag.TagKey;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.gen.structure.Structure;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +47,9 @@ public abstract class ExplorationMapLootFunctionMixin {
         Vec3d pos = context.get(LootContextParameters.ORIGIN);
         NbtCompound nbtPos = new NbtCompound();
         nbtPos.putString(Bettermaps.NBT_EXPLORATION_DIM, context.getWorld().getDimensionKey().getValue().toString());
-        nbtPos.putDouble("x", pos.getX());
-        nbtPos.putDouble("y", pos.getY());
-        nbtPos.putDouble("z", pos.getZ());
+        nbtPos.putInt("x", (int) pos.getX());
+        nbtPos.putInt("y", (int) pos.getY());
+        nbtPos.putInt("z", (int) pos.getZ());
 
         // function args logic
         NbtCompound explorationNbt = new NbtCompound();
@@ -61,7 +61,6 @@ public abstract class ExplorationMapLootFunctionMixin {
 
         // function result logic
         ItemStack newStack = new ItemStack(Items.MAP);
-        //newStack.addHideFlag(ItemStack.TooltipSection.ADDITIONAL);
         NbtCompound nbt = new NbtCompound();
         nbt.put(Bettermaps.NBT_POS_DATA, nbtPos);
         nbt.putBoolean(Bettermaps.NBT_IS_BETTER_MAP, true);
