@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "bettermaps",
+  "version": "${version}",
+  "name": "bettermaps",
+  "description": "Improves exploration maps generation upon loot-table processing",
+  "authors": [
+    "Nerjal Nosk"
+  ],
+  "contact": {
+    "repo": "https://github.com/NerjalNosk/bettermaps"
+  },
+  "license": "MIT",
+  "icon": "assets/bettermaps/icon.png",
+  "environment": "*",
+  "mixins": [
+    "bettermaps.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": ">=${minecraft_version}"
+  },
+  "accessWidener": "bettermaps.accesswidener"
+}
