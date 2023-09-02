@@ -5,8 +5,13 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "ExplorationMapLootFunctionMixin",
+    "ExplorationMapLootFunctionMixin$SerializerMixin",
     "GamerulesInitializer",
-    "MapItemMixin"
+    "MapItemMixin",
+    "ServerWorldMixin"
+  ],
+  "client": [
+    "MinecraftClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

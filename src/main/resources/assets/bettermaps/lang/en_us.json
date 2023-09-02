@@ -2,5 +2,7 @@
   "gamerule.doBetterMaps": "Toggle 'Maps of the Unknown'",
   "gamerule.doBetterMaps.description": "Use the 'Maps of the Unknown' exploration map generator, to lighten the loot processing load",
   "gamerule.doBetterMapFromPlayerPos": "Locate map from player pos",
-  "gamerule.doBetterMapFromPlayerPos.description": "Makes the 'Maps of the Unknown' maps locate the structure from the player pos when activated, instead of the original chest pos"
+  "gamerule.doBetterMapFromPlayerPos.description": "Makes the 'Maps of the Unknown' maps locate the structure from the player pos when activated, instead of the original chest pos",
+  "gamerule.doBetterMapsDynamicLocalising": "Dynamic map structure locating",
+  "gamerule.doBetterMapsDynamicLocalising.description": "Makes locating structures threaded, to prevent freezing the world while it is running"
 }
