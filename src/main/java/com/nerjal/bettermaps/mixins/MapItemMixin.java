@@ -24,12 +24,13 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.Structure;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EmptyMapItem.class)
-public class MapItemMixin {
+public abstract class MapItemMixin {
 
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
     private void explorationMapUseInjector(
@@ -43,12 +44,19 @@ public class MapItemMixin {
         ServerWorld world = (ServerWorld) w;
         ItemStack stack = user.getStackInHand(hand);
         if (stack.isEmpty()) return;
-        NbtCompound nbt = stack.getNbt();
-        if (nbt == null) return;
-        nbt = nbt.copy();
+        NbtCompound sourceNbt = stack.getNbt();
+        if (sourceNbt == null) return;
+        NbtCompound nbt = sourceNbt.copy();
         if (! nbt.contains(Bettermaps.NBT_IS_BETTER_MAP, NbtElement.BYTE_TYPE)) return;
         if (! nbt.getBoolean(Bettermaps.NBT_IS_BETTER_MAP)) return;
         if (! nbt.contains(Bettermaps.NBT_EXPLORATION_DATA, NbtElement.COMPOUND_TYPE)) return;
+
+        if (nbt.contains(Bettermaps.NBT_MAP_LOCK) && nbt.getBoolean(Bettermaps.NBT_MAP_LOCK)) {
+            user.sendMessage(Text.literal("x").formatted(Formatting.RED, Formatting.BOLD), true);
+            cir.setReturnValue(TypedActionResult.consume(stack));
+            cir.cancel();
+            return;
+        }
 
         NbtCompound explorationNbt = nbt.getCompound(Bettermaps.NBT_EXPLORATION_DATA);
 
@@ -70,17 +78,46 @@ public class MapItemMixin {
             cir.cancel();
             return;
         }
+
+        // locate task setup
+        Vec3i fPos = pos;
+        Runnable task = () -> locationTask(world, stack, nbt, explorationNbt, radius, skip, fPos, destination, user);
+        if (! user.isCreative()) sourceNbt.putBoolean(Bettermaps.NBT_MAP_LOCK, true);
+
+        // task run
+        if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCALISING))) {
+            Bettermaps.LocateTask locateTask = new Bettermaps.LocateTask(task);
+            Bettermaps.locateMapTaskThreads.add(locateTask);
+            locateTask.start();
+            user.sendMessage(Text.literal("\u2714").formatted(Formatting.GREEN, Formatting.BOLD), true);
+        } else {
+            task.run();
+        }
+
+        cir.setReturnValue(TypedActionResult.consume(stack));
+        cir.cancel();
+    }
+
+    @Unique
+    private static void locationTask(@NotNull ServerWorld world, @NotNull ItemStack stack, @NotNull NbtCompound nbt,
+                                     @NotNull NbtCompound explorationNbt, int radius, boolean skip, @NotNull Vec3i pos,
+                                     @NotNull TagKey<Structure> destination, @NotNull PlayerEntity user) {
         BlockPos blockPos = world.locateStructure(destination, new BlockPos(pos), radius, skip);
 
         if (blockPos == null) {
             user.sendMessage(Text.literal("x").formatted(Formatting.BLUE, Formatting.BOLD), true);
-            cir.setReturnValue(TypedActionResult.consume(stack));
-            cir.cancel();
+            return;
+        }
+
+        Bettermaps.mapTaskSafeLock.lock();
+        // check user holds map
+        if ((!user.getStackInHand(Hand.MAIN_HAND).isEmpty() && !user.getStackInHand(Hand.MAIN_HAND).equals(stack))
+                && !user.getStackInHand(Hand.OFF_HAND).isEmpty() && !user.getStackInHand(Hand.OFF_HAND).equals(stack)) {
             return;
         }
 
         // map data
-        byte zoom = explorationNbt.getByte("zoom");
+        byte zoom = explorationNbt.getByte(Bettermaps.NBT_EXPLORATION_ZOOM);
         MapIcon.Type decoration = MapIcon.Type.byId(explorationNbt.getByte(Bettermaps.NBT_EXPLORATION_ICON));
 
         // map creation
@@ -90,6 +127,7 @@ public class MapItemMixin {
         nbt.remove(Bettermaps.NBT_POS_DATA);
         nbt.remove(Bettermaps.NBT_EXPLORATION_DATA);
         nbt.remove(Bettermaps.NBT_IS_BETTER_MAP);
+        nbt.remove(Bettermaps.NBT_MAP_LOCK);
         itemStack.getOrCreateNbt().copyFrom(nbt);
 
         // give to user
@@ -97,7 +135,6 @@ public class MapItemMixin {
             user.dropItem(itemStack, false);
         }
         if (! user.isCreative()) stack.decrement(1);
-        cir.setReturnValue(TypedActionResult.consume(stack));
-        cir.cancel();
+        Bettermaps.mapTaskSafeLock.unlock();
     }
 }
