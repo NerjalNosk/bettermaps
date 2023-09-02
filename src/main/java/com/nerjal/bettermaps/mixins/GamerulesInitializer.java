@@ -37,9 +37,9 @@ public abstract class GamerulesInitializer {
                         GameRules.Category.PLAYER,
                         GameRules.BooleanRule.create(false))
         );
-        Bettermaps.set(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCALISING,
+        Bettermaps.set(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCATING,
                 register(
-                        Bettermaps.DO_BETTERMAP_DYNAMIC_LOCALISING,
+                        Bettermaps.DO_BETTERMAP_DYNAMIC_LOCATING,
                         GameRules.Category.PLAYER,
                         GameRules.BooleanRule.create(true)
                 ));

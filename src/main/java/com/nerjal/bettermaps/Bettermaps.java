@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class Bettermaps {
     public static final String DO_BETTERMAPS = "doBetterMaps";
     public static final String DO_BETTERMAP_FROM_PLAYER_POS = "doBetterMapFromPlayerPos";
-    public static final String DO_BETTERMAP_DYNAMIC_LOCALISING = "doBetterMapsDynamicLocalising";
+    public static final String DO_BETTERMAP_DYNAMIC_LOCATING = "doBetterMapsDynamicLocating";
 
     public static final String NBT_IS_BETTER_MAP = "isExplorationMap";
     public static final String NBT_POS_DATA = "pos";

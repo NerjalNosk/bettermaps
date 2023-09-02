@@ -85,7 +85,7 @@ public abstract class MapItemMixin {
         if (! user.isCreative()) sourceNbt.putBoolean(Bettermaps.NBT_MAP_LOCK, true);
 
         // task run
-        if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCALISING))) {
+        if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCATING))) {
             Bettermaps.LocateTask locateTask = new Bettermaps.LocateTask(task);
             Bettermaps.locateMapTaskThreads.add(locateTask);
             locateTask.start();
