@@ -34,7 +34,7 @@ public class MinecraftClientMixin {
                 Map.Entry<String, Bettermaps.LocateTask> entry = taskIterator.next();
                 Bettermaps.LocateTask task = entry.getValue();
                 if (task.isInterrupted()) {
-                    tasks.put(entry.getKey(), new Bettermaps.LocateTask(task.task));
+                    tasks.put(entry.getKey(), new Bettermaps.LocateTask(task.task, entry.getKey()));
                     taskIterator.remove();
                 }
             }

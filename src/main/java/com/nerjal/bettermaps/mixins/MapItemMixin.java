@@ -92,7 +92,7 @@ public abstract class MapItemMixin {
 
         // task run
         if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCATING))) {
-            Bettermaps.LocateTask locateTask = new Bettermaps.LocateTask(task);
+            Bettermaps.LocateTask locateTask = new Bettermaps.LocateTask(task, id);
             Bettermaps.locateMapTaskThreads.putIfAbsent(id, locateTask);
             locateTask.start();
             user.sendMessage(Text.literal("\u2714").formatted(Formatting.GREEN, Formatting.BOLD), true);
