@@ -9,9 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 @Mixin(MinecraftClient.class)
 public class MinecraftClientMixin {
@@ -20,7 +18,7 @@ public class MinecraftClientMixin {
     @Inject(method = "tick", at = @At("HEAD"))
     private void clientTickStopMapThreadsIfPaused(CallbackInfo ci) {
         if (this.paused && Bettermaps.isClientPaused()) {
-            Bettermaps.locateMapTaskThreads.forEach(t -> {
+            Bettermaps.locateMapTaskThreads.forEach((s,t) -> {
                 try {
                     t.interrupt();
                 } catch (SecurityException ex) {
@@ -29,17 +27,19 @@ public class MinecraftClientMixin {
             });
             Bettermaps.setClientPaused(true);
         } else if (Bettermaps.isClientPaused()) {
-            Iterator<Bettermaps.LocateTask> taskIterator = Bettermaps.locateMapTaskThreads.iterator();
-            Collection<Bettermaps.LocateTask> tasks = new ArrayList<>();
+            Iterator<Map.Entry<String, Bettermaps.LocateTask>> taskIterator =
+                    Bettermaps.locateMapTaskThreads.entrySet().iterator();
+            Map<String, Bettermaps.LocateTask> tasks = new HashMap<>();
             while (taskIterator.hasNext()) {
-                Bettermaps.LocateTask task = taskIterator.next();
+                Map.Entry<String, Bettermaps.LocateTask> entry = taskIterator.next();
+                Bettermaps.LocateTask task = entry.getValue();
                 if (task.isInterrupted()) {
-                    tasks.add(new Bettermaps.LocateTask(task.task));
+                    tasks.put(entry.getKey(), new Bettermaps.LocateTask(task.task));
                     taskIterator.remove();
                 }
             }
-            tasks.forEach(task -> {
-                Bettermaps.locateMapTaskThreads.add(task);
+            tasks.forEach((id, task) -> {
+                Bettermaps.locateMapTaskThreads.put(id, task);
                 task.start();
             });
             Bettermaps.setClientPaused(false);

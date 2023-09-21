@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ServerWorldMixin {
     @Inject(method = "shutdown", at = @At("HEAD"))
     private void serverShutdownStopMapThreadsInjector(CallbackInfo ci) {
-        Bettermaps.locateMapTaskThreads.forEach(task -> {
+        Bettermaps.locateMapTaskThreads.forEach((id, task) -> {
             try {
                 task.interrupt();
             } catch (SecurityException ex) {
@@ -23,7 +23,7 @@ public abstract class ServerWorldMixin {
 
     @Inject(method = "stop", at = @At(value = "INVOKE", target = "Ljava/lang/Thread;join()V", shift = At.Shift.BEFORE))
     private void beforeStopInterruptMapThreadsInjector(boolean waitForShutdown, CallbackInfo ci) {
-        Bettermaps.locateMapTaskThreads.forEach(task -> {
+        Bettermaps.locateMapTaskThreads.forEach((id, task) -> {
             try {
                 task.interrupt();
             } catch (SecurityException ex) {

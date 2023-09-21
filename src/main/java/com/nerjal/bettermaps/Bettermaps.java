@@ -5,10 +5,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.world.GameRules;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -29,7 +26,7 @@ public final class Bettermaps {
     public static final String NBT_MAP_LOCK = "_lock";
 
     private static final Map<String, GameRules.Key<GameRules.BooleanRule>> rules = new HashMap<>();
-    public static final Collection<LocateTask> locateMapTaskThreads = new LinkedHashSet<>();
+    public static final Map<String, LocateTask> locateMapTaskThreads = new LinkedHashMap<>();
     public static final Lock mapTaskSafeLock = new ReentrantLock();
 
     @Environment(EnvType.CLIENT)
