@@ -55,9 +55,11 @@ public final class Bettermaps {
 
     public static class LocateTask extends Thread {
         public final Runnable task;
+        private final String id;
 
-        public LocateTask(Runnable task) {
+        public LocateTask(Runnable task, String id) {
             this.task = task;
+            this.id = id;
         }
 
         @Override
@@ -65,8 +67,9 @@ public final class Bettermaps {
             this.task.run();
         }
 
+        @Override
         public void interrupt() {
-            locateMapTaskThreads.remove(this);
+            locateMapTaskThreads.remove(id);
             super.interrupt();
         }
     }
