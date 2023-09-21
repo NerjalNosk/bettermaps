@@ -67,5 +67,10 @@ public final class Bettermaps {
         public void run() {
             this.task.run();
         }
+
+        public void interrupt() {
+            locateMapTaskThreads.remove(this);
+            super.interrupt();
+        }
     }
 }

@@ -136,5 +136,6 @@ public abstract class MapItemMixin {
         }
         if (! user.isCreative()) stack.decrement(1);
         Bettermaps.mapTaskSafeLock.unlock();
+        Thread.currentThread().interrupt();
     }
 }
