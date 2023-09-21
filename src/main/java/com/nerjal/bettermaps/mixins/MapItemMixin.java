@@ -29,6 +29,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.UUID;
+
 @Mixin(EmptyMapItem.class)
 public abstract class MapItemMixin {
 
@@ -51,11 +53,14 @@ public abstract class MapItemMixin {
         if (! nbt.getBoolean(Bettermaps.NBT_IS_BETTER_MAP)) return;
         if (! nbt.contains(Bettermaps.NBT_EXPLORATION_DATA, NbtElement.COMPOUND_TYPE)) return;
 
-        if (nbt.contains(Bettermaps.NBT_MAP_LOCK) && nbt.getBoolean(Bettermaps.NBT_MAP_LOCK)) {
-            user.sendMessage(Text.literal("x").formatted(Formatting.RED, Formatting.BOLD), true);
-            cir.setReturnValue(TypedActionResult.consume(stack));
-            cir.cancel();
-            return;
+        if (nbt.contains(Bettermaps.NBT_MAP_LOCK)) {
+            String s = nbt.getString(Bettermaps.NBT_MAP_LOCK);
+            if (Bettermaps.locateMapTaskThreads.containsKey(s)) {
+                user.sendMessage(Text.literal("x").formatted(Formatting.RED, Formatting.BOLD), true);
+                cir.setReturnValue(TypedActionResult.consume(stack));
+                cir.cancel();
+                return;
+            }
         }
 
         NbtCompound explorationNbt = nbt.getCompound(Bettermaps.NBT_EXPLORATION_DATA);
@@ -81,13 +86,14 @@ public abstract class MapItemMixin {
 
         // locate task setup
         Vec3i fPos = pos;
-        Runnable task = () -> locationTask(world, stack, nbt, explorationNbt, radius, skip, fPos, destination, user);
+        String id = UUID.randomUUID().toString();
+        Runnable task = ()->locationTask(world, stack, nbt, explorationNbt, radius, skip, fPos, destination, user, id);
         if (! user.isCreative()) sourceNbt.putBoolean(Bettermaps.NBT_MAP_LOCK, true);
 
         // task run
         if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCATING))) {
             Bettermaps.LocateTask locateTask = new Bettermaps.LocateTask(task);
-            Bettermaps.locateMapTaskThreads.add(locateTask);
+            Bettermaps.locateMapTaskThreads.putIfAbsent(id, locateTask);
             locateTask.start();
             user.sendMessage(Text.literal("\u2714").formatted(Formatting.GREEN, Formatting.BOLD), true);
         } else {
@@ -101,11 +107,12 @@ public abstract class MapItemMixin {
     @Unique
     private static void locationTask(@NotNull ServerWorld world, @NotNull ItemStack stack, @NotNull NbtCompound nbt,
                                      @NotNull NbtCompound explorationNbt, int radius, boolean skip, @NotNull Vec3i pos,
-                                     @NotNull TagKey<Structure> destination, @NotNull PlayerEntity user) {
+                                     @NotNull TagKey<Structure> destination, @NotNull PlayerEntity user, String lock) {
         BlockPos blockPos = world.locateStructure(destination, new BlockPos(pos), radius, skip);
 
         if (blockPos == null) {
-            user.sendMessage(Text.literal("x").formatted(Formatting.BLUE, Formatting.BOLD), true);
+            user.sendMessage(Text.literal("x").formatted(Formatting.DARK_BLUE, Formatting.BOLD), true);
+            Bettermaps.locateMapTaskThreads.remove(lock);
             return;
         }
 
@@ -113,6 +120,8 @@ public abstract class MapItemMixin {
         // check user holds map
         if ((!user.getStackInHand(Hand.MAIN_HAND).isEmpty() && !user.getStackInHand(Hand.MAIN_HAND).equals(stack))
                 && !user.getStackInHand(Hand.OFF_HAND).isEmpty() && !user.getStackInHand(Hand.OFF_HAND).equals(stack)) {
+            Bettermaps.locateMapTaskThreads.remove(lock);
+            Bettermaps.mapTaskSafeLock.unlock();
             return;
         }
 
@@ -135,6 +144,7 @@ public abstract class MapItemMixin {
             user.dropItem(itemStack, false);
         }
         if (! user.isCreative()) stack.decrement(1);
+        Bettermaps.locateMapTaskThreads.remove(lock);
         Bettermaps.mapTaskSafeLock.unlock();
         Thread.currentThread().interrupt();
     }
