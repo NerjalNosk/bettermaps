@@ -36,3 +36,9 @@ Why didn't you just name it "BetterMaps"?
 
 What happens if I remove the mod?
 * This mod works hand in hand with vanilla Minecraft, but only change the latter's behavior when loaded. Thus, if you remove the mod, using a special "empty map" created by the mod would only make the game behave as normal with a regular empty map.
+
+Is this mod incompatible with _<insert name here>_?
+* The only real response I can give you is [maybe](https://tryitands.ee).
+* [Async Locator](https://modrinth.com/mod/async-locator): Yes and no. This mod cannot work when enabled with Async Locator if its exploration map feature is enabled.
+  And considering my plans for the future of this mod, they will most probably not be compatible at all on the long term.
+  But until further notice, you may use both while validating the aforementioned conditions.
