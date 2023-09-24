@@ -56,7 +56,7 @@ public abstract class MapItemMixin {
         if (nbt.contains(Bettermaps.NBT_MAP_LOCK)) {
             String s = nbt.getString(Bettermaps.NBT_MAP_LOCK);
             if (Bettermaps.locateMapTaskThreads.containsKey(s)) {
-                user.sendMessage(Text.literal("x").formatted(Formatting.RED, Formatting.BOLD), true);
+                user.sendMessage(Text.literal("x").formatted(Formatting.GOLD, Formatting.BOLD), true);
                 cir.setReturnValue(TypedActionResult.consume(stack));
                 cir.cancel();
                 return;
@@ -86,9 +86,9 @@ public abstract class MapItemMixin {
 
         // locate task setup
         Vec3i fPos = pos;
-        String id = UUID.randomUUID().toString();
+        String id = String.format("%d-%s", Bettermaps.taskCounter.incrementAndGet(), user.getDisplayName().getString());
         Runnable task = ()->locationTask(world, stack, nbt, explorationNbt, radius, skip, fPos, destination, user, id);
-        if (! user.isCreative()) sourceNbt.putBoolean(Bettermaps.NBT_MAP_LOCK, true);
+        if (! user.isCreative()) sourceNbt.putString(Bettermaps.NBT_MAP_LOCK, id);
 
         // task run
         if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCATING))) {
