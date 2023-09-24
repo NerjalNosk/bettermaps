@@ -4,6 +4,7 @@
   "package": "com.nerjal.bettermaps.mixins",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "CommandManagerMixin",
     "ExplorationMapLootFunctionMixin",
     "ExplorationMapLootFunctionMixin$SerializerMixin",
     "GamerulesInitializer",
