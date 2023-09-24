@@ -6,6 +6,7 @@ import net.minecraft.world.GameRules;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -27,6 +28,7 @@ public final class Bettermaps {
 
     private static final Map<String, GameRules.Key<GameRules.BooleanRule>> rules = new HashMap<>();
     public static final Map<String, LocateTask> locateMapTaskThreads = new LinkedHashMap<>();
+    public static final AtomicInteger taskCounter = new AtomicInteger();
     public static final Lock mapTaskSafeLock = new ReentrantLock();
 
     @Environment(EnvType.CLIENT)
