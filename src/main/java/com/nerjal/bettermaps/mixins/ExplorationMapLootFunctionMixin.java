@@ -47,7 +47,7 @@ public abstract class ExplorationMapLootFunctionMixin implements BetterMapItem {
             @NotNull LootContext context,
             CallbackInfoReturnable<ItemStack> cir
     ) {
-        if (!context.getWorld().getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAPS))) {
+        if (!Bettermaps.isLootEnabled(context.getWorld())) {
             return;
         }
         if ((!stack.isOf(Items.MAP)) && (!stack.isOf(Items.FILLED_MAP))) {
