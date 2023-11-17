@@ -9,7 +9,8 @@
     "ExplorationMapLootFunctionMixin$SerializerMixin",
     "GamerulesInitializer",
     "MapItemMixin",
-    "ServerWorldMixin"
+    "ServerWorldMixin",
+    "TradeOffersSellMapFactoryMixin"
   ],
   "client": [
     "MinecraftClientMixin"

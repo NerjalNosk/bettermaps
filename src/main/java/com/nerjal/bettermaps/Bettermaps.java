@@ -24,6 +24,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public final class Bettermaps {
     public static final String DO_BETTERMAPS = "doBetterMaps";
+    public static final String DO_BETTERMAPS_LOOT = "doBetterMapsLoot";
+    public static final String DO_BETTERMAPS_TRADE = "doBetterMapsTrades";
     public static final String DO_BETTERMAP_FROM_PLAYER_POS = "doBetterMapFromPlayerPos";
     public static final String DO_BETTERMAP_DYNAMIC_LOCATING = "doBetterMapsDynamicLocating";
 
@@ -86,6 +88,18 @@ public final class Bettermaps {
             locateMapTaskThreads.remove(id);
             super.interrupt();
         }
+    }
+
+    public static boolean isLootEnabled(World w) {
+        return isEnabled(w) && w.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAPS_LOOT));
+    }
+
+    public static boolean isTradeEnabled(World w) {
+        return isEnabled(w) && w.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAPS_TRADE));
+    }
+
+    public static boolean isEnabled(World w) {
+        return w.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAPS));
     }
 
     public static ItemStack createMap(Vec3d origin, World sourceWorld, TagKey<Structure> destination,

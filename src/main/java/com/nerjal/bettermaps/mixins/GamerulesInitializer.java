@@ -30,6 +30,20 @@ public abstract class GamerulesInitializer {
                         GameRules.BooleanRule.create(true)
                 )
         );
+        Bettermaps.set(Bettermaps.DO_BETTERMAPS_LOOT,
+                register(
+                        Bettermaps.DO_BETTERMAPS_LOOT,
+                        GameRules.Category.DROPS,
+                        GameRules.BooleanRule.create(true)
+                )
+        );
+        Bettermaps.set(Bettermaps.DO_BETTERMAPS_TRADE,
+                register(
+                        Bettermaps.DO_BETTERMAPS_TRADE,
+                        GameRules.Category.MOBS,
+                        GameRules.BooleanRule.create(true)
+                )
+        );
         Bettermaps.set(
                 Bettermaps.DO_BETTERMAP_FROM_PLAYER_POS,
                 register(
