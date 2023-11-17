@@ -5,7 +5,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapIcon;
-import net.minecraft.tag.TagKey;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.random.Random;
@@ -33,11 +33,11 @@ public abstract class TradeOffersSellMapFactoryMixin {
 
     @Inject(method = "create", at = @At("HEAD"), cancellable = true)
     private void createInjector(Entity entity, Random random, CallbackInfoReturnable<TradeOffer> cir) {
-        if (!Bettermaps.isTradeEnabled(entity.world)) {
+        if (!Bettermaps.isTradeEnabled(entity.getWorld())) {
             return;
         }
-        Identifier target = explorationTargetWorld == null ? entity.world.getRegistryKey().getValue() : explorationTargetWorld;
-        ItemStack stack = Bettermaps.createMap(entity.getPos(), entity.world, structure, target,
+        Identifier target = explorationTargetWorld == null ? entity.getWorld().getRegistryKey().getValue() : explorationTargetWorld;
+        ItemStack stack = Bettermaps.createMap(entity.getPos(), entity.getWorld(), structure, target,
                 iconType.getId(), (byte) 2, 100, true, Text.translatable(nameKey));
         stack.setCustomName(Text.translatable(nameKey));
         cir.setReturnValue(new TradeOffer(new ItemStack(Items.EMERALD, price), new ItemStack(Items.COMPASS), stack, maxUses, experience, 0.2F));
