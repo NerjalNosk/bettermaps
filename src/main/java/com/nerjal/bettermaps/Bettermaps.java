@@ -2,8 +2,20 @@ package com.nerjal.bettermaps;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
+import net.minecraft.tag.TagKey;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.Structure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -74,5 +86,44 @@ public final class Bettermaps {
             locateMapTaskThreads.remove(id);
             super.interrupt();
         }
+    }
+
+    public static ItemStack createMap(Vec3d origin, World sourceWorld, TagKey<Structure> destination,
+                                      Identifier destWorld, byte decoration, byte zoom, int radius,
+                                      boolean skipExistingChunks, @Nullable Text displayName) {
+        // pos logic
+        NbtCompound nbtPos = new NbtCompound();
+        nbtPos.putString(Bettermaps.NBT_EXPLORATION_DIM, sourceWorld.getDimensionKey().getValue().toString());
+        nbtPos.putDouble("x", origin.getX());
+        nbtPos.putDouble("y", origin.getY());
+        nbtPos.putDouble("z", origin.getZ());
+
+        // function args logic
+        NbtCompound explorationNbt = new NbtCompound();
+        explorationNbt.putString(Bettermaps.NBT_EXPLORATION_DEST, destination.id().toString());
+        explorationNbt.putByte(Bettermaps.NBT_EXPLORATION_ICON, decoration);
+        explorationNbt.putByte(Bettermaps.NBT_EXPLORATION_ZOOM, zoom);
+        explorationNbt.putInt(Bettermaps.NBT_EXPLORATION_RADIUS, radius);
+        explorationNbt.putBoolean(Bettermaps.NBT_EXPLORATION_SKIP, skipExistingChunks);
+
+        // function result logic
+        ItemStack stack = new ItemStack(Items.MAP);
+        NbtCompound nbt = new NbtCompound();
+        nbt.put(Bettermaps.NBT_POS_DATA, nbtPos);
+        nbt.putBoolean(Bettermaps.NBT_IS_BETTER_MAP, true);
+        nbt.put(Bettermaps.NBT_EXPLORATION_DATA, explorationNbt);
+
+        NbtCompound display = new NbtCompound();
+        NbtList lore = new NbtList();
+        lore.add(NbtString.of(String.format("{\"text\": \"[%s]\", \"color\": \"dark_gray\", \"italic\":false}", destWorld)));
+        display.put("Lore", lore);
+        nbt.put("display", display);
+        if (displayName != null) {
+            stack.setCustomName(displayName);
+        }
+
+        stack.setNbt(nbt);
+        stack.setCount(1);
+        return stack;
     }
 }
