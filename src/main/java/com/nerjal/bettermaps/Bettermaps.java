@@ -45,7 +45,6 @@ public final class Bettermaps {
     public static final AtomicInteger taskCounter = new AtomicInteger();
     public static final Lock mapTaskSafeLock = new ReentrantLock();
 
-    @Environment(EnvType.CLIENT)
     private static volatile boolean clientPaused = false;
 
     public static void set(@NotNull String key, GameRules.Key<GameRules.BooleanRule> value) {
