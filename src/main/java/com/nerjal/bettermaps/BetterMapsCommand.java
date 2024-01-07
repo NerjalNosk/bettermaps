@@ -8,7 +8,7 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.suggestion.SuggestionProviders;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ public final class BetterMapsCommand {
     }
 
     private static int executeList(@NotNull CommandContext<ServerCommandSource> context) {
-        context.getSource().sendFeedback(Text.literal(
+        context.getSource().sendFeedback(new LiteralText(
                 String.join("\n", Bettermaps.locateMapTaskThreads.keySet().stream().toList())
         ).formatted(Formatting.YELLOW), false);
         return 0;
@@ -52,10 +52,10 @@ public final class BetterMapsCommand {
             Bettermaps.LocateTask task = Bettermaps.locateMapTaskThreads.get(id);
             task.interrupt();
             Bettermaps.locateMapTaskThreads.remove(id);
-            context.getSource().sendFeedback(Text.literal(id).formatted(Formatting.GREEN), false);
+            context.getSource().sendFeedback(new LiteralText(id).formatted(Formatting.GREEN), false);
             return 0;
         }
-        context.getSource().sendError(Text.literal(id));
+        context.getSource().sendError(new LiteralText(id));
         return 1;
     }
 }

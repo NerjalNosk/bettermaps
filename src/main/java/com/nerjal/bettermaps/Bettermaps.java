@@ -13,7 +13,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
-import net.minecraft.world.gen.structure.Structure;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,12 +101,12 @@ public final class Bettermaps {
         return w.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAPS));
     }
 
-    public static ItemStack createMap(Vec3d origin, World sourceWorld, TagKey<Structure> destination,
+    public static ItemStack createMap(Vec3d origin, World sourceWorld, TagKey<ConfiguredStructureFeature<?, ?>> destination,
                                       Identifier destWorld, byte decoration, byte zoom, int radius,
                                       boolean skipExistingChunks, @Nullable Text displayName) {
         // pos logic
         NbtCompound nbtPos = new NbtCompound();
-        nbtPos.putString(Bettermaps.NBT_EXPLORATION_DIM, sourceWorld.getDimensionKey().getValue().toString());
+        nbtPos.putString(Bettermaps.NBT_EXPLORATION_DIM, sourceWorld.getRegistryKey().getValue().toString());
         nbtPos.putDouble("x", origin.getX());
         nbtPos.putDouble("y", origin.getY());
         nbtPos.putDouble("z", origin.getZ());

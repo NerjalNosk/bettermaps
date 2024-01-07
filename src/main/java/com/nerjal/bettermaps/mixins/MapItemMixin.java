@@ -11,7 +11,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.tag.TagKey;
-import net.minecraft.text.Text;
+import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -20,15 +20,13 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import net.minecraft.world.gen.structure.Structure;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.UUID;
 
 @Mixin(EmptyMapItem.class)
 public abstract class MapItemMixin {
@@ -55,7 +53,7 @@ public abstract class MapItemMixin {
         if (nbt.contains(Bettermaps.NBT_MAP_LOCK)) {
             String s = nbt.getString(Bettermaps.NBT_MAP_LOCK);
             if (Bettermaps.locateMapTaskThreads.containsKey(s)) {
-                user.sendMessage(Text.literal("x").formatted(Formatting.GOLD, Formatting.BOLD), true);
+                user.sendMessage(new LiteralText("x").formatted(Formatting.GOLD, Formatting.BOLD), true);
                 cir.setReturnValue(TypedActionResult.consume(stack));
                 cir.cancel();
                 return;
@@ -70,13 +68,13 @@ public abstract class MapItemMixin {
         Vec3d pos = user.getPos();
 
         Identifier destId = Identifier.tryParse(explorationNbt.getString(Bettermaps.NBT_EXPLORATION_DEST));
-        TagKey<Structure> destination = TagKey.of(Registry.STRUCTURE_KEY, destId);
+        TagKey<ConfiguredStructureFeature<?, ?>> destination = TagKey.of(Registry.CONFIGURED_STRUCTURE_FEATURE_KEY, destId);
         NbtCompound posNbt = nbt.getCompound(Bettermaps.NBT_POS_DATA);
         if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_FROM_PLAYER_POS))) {
             pos = new Vec3d(posNbt.getDouble("x"), posNbt.getDouble("y"), posNbt.getDouble("z"));
         }
-        if (!world.getDimensionKey().getValue().toString().equals(posNbt.getString(Bettermaps.NBT_EXPLORATION_DIM))) {
-            user.sendMessage(Text.literal("x").formatted(Formatting.RED, Formatting.BOLD), true);
+        if (!world.getRegistryKey().getValue().toString().equals(posNbt.getString(Bettermaps.NBT_EXPLORATION_DIM))) {
+            user.sendMessage(new LiteralText("x").formatted(Formatting.RED, Formatting.BOLD), true);
             cir.setReturnValue(TypedActionResult.consume(stack));
             cir.cancel();
             return;
@@ -93,7 +91,7 @@ public abstract class MapItemMixin {
             Bettermaps.LocateTask locateTask = new Bettermaps.LocateTask(task, id);
             Bettermaps.locateMapTaskThreads.putIfAbsent(id, locateTask);
             locateTask.start();
-            user.sendMessage(Text.literal("\u2714").formatted(Formatting.GREEN, Formatting.BOLD), true);
+            user.sendMessage(new LiteralText("\u2714").formatted(Formatting.GREEN, Formatting.BOLD), true);
         } else {
             task.run();
         }
@@ -105,11 +103,12 @@ public abstract class MapItemMixin {
     @Unique
     private static void locationTask(@NotNull ServerWorld world, @NotNull ItemStack stack, @NotNull NbtCompound nbt,
                                      @NotNull NbtCompound explorationNbt, int radius, boolean skip, Vec3d pos,
-                                     @NotNull TagKey<Structure> destination, @NotNull PlayerEntity user, String lock) {
+                                     @NotNull TagKey<ConfiguredStructureFeature<?, ?>> destination,
+                                     @NotNull PlayerEntity user, String lock) {
         BlockPos blockPos = world.locateStructure(destination, new BlockPos(pos), radius, skip);
 
         if (blockPos == null) {
-            user.sendMessage(Text.literal("x").formatted(Formatting.DARK_BLUE, Formatting.BOLD), true);
+            user.sendMessage(new LiteralText("x").formatted(Formatting.DARK_BLUE, Formatting.BOLD), true);
             Bettermaps.locateMapTaskThreads.remove(lock);
             return;
         }

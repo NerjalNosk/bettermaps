@@ -37,7 +37,7 @@ java {
     if (JavaVersion.current() < javaVersion) {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
-    archivesBaseName = "${project.mod_id}-mc${project.minecraft_version}"
+    archivesBaseName = "${project.mod_id}+${project.minecraft_version}"
     withSourcesJar()
 }
 

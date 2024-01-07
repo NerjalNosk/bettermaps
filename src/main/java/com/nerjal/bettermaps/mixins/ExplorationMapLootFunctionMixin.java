@@ -11,14 +11,11 @@ import net.minecraft.loot.condition.LootCondition;
 import net.minecraft.loot.context.LootContext;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.loot.function.ExplorationMapLootFunction;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.tag.TagKey;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.gen.structure.Structure;
+import net.minecraft.world.gen.feature.ConfiguredStructureFeature;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,11 +30,11 @@ import java.util.Objects;
 @Mixin(ExplorationMapLootFunction.class)
 public abstract class ExplorationMapLootFunctionMixin implements BetterMapItem {
 
-    @Shadow @Final TagKey<Structure> destination;
     @Shadow @Final MapIcon.Type decoration;
     @Shadow @Final byte zoom;
     @Shadow @Final int searchRadius;
     @Shadow @Final boolean skipExistingChunks;
+    @Shadow @Final TagKey<ConfiguredStructureFeature<?, ?>> destination;
     @Unique
     private Identifier explorationTargetWorldId;
 
@@ -57,7 +54,7 @@ public abstract class ExplorationMapLootFunctionMixin implements BetterMapItem {
         Vec3d origin = context.get(LootContextParameters.ORIGIN);
         Objects.requireNonNull(origin);
 
-        Identifier targetWorld = context.getWorld().getDimensionKey().getValue();
+        Identifier targetWorld = context.getWorld().getRegistryKey().getValue();
         if (this.explorationTargetWorldId != null) {
             targetWorld = this.explorationTargetWorldId;
         }
