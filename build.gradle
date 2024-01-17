@@ -1,3 +1,5 @@
+import java.nio.file.Files
+
 plugins {
     id 'fabric-loom' version '1.2-SNAPSHOT'
     id 'maven-publish'
@@ -6,11 +8,45 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
+repositories {
+    maven  {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
+}
+
+if (!Files.exists(file(".local/").toPath())) Files.createDirectory(file(".local").toPath())
+
+def remapped_mc = "${project.minecraft_version.split("\\.").join("_")}"
+def remapped_folder_name = "net_fabricmc_yarn_${remapped_mc}_${remapped_mc}_build_${project.yarn_build}"
+def remapped_folder = ".gradle/loom-cache/remapped_mods/${remapped_folder_name}/maven/modrinth/"
+def unzip =  (CharSequence sourceFile, CharSequence fileName, CharSequence destinationFile) -> {
+    println "from: ${sourceFile}"
+    println "at: ${fileName}"
+    println "to: ${destinationFile}"
+    def t = copy {
+        from(zipTree(sourceFile).filter {it.name == fileName}.first())
+        into destinationFile
+    }
+    while (!t.getDidWork()) sleep(100)
+    return new File(destinationFile, fileName)
+}
+
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    mappings "net.fabricmc:yarn:${project.minecraft_version}+build.${project.yarn_build}"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    modImplementation "maven.modrinth:c2me-fabric:${project.c2me_version}"
+}
+
+def c2me_version_short = "${project.c2me_version}".substring(0, "${project.c2me_version}".length()-"+${project.minecraft_version}".length()-2)
+// Run once without the following dependency update, then once with
+dependencies {
+    modCompileOnly files(unzip("${remapped_folder}/c2me-fabric/${project.c2me_version}/c2me-fabric-${project.c2me_version}.jar",
+            "c2me-fixes-worldgen-threading-issues-mc${project.minecraft_version}.2-${c2me_version_short}.jar", ".local")
+    )
 }
 
 processResources {
