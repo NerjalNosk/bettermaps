@@ -22,7 +22,7 @@ public class CheckedThreadLocalRandomMixin extends LocalRandom {
 
     @Inject(method = "isSafe", at = @At("HEAD"), cancellable = true)
     private void onSetSeedCheckIfMapLocationThread(CallbackInfoReturnable<Boolean> cir) {
-        Thread t = this.owner != null ? this.owner.get() : null;
+        Thread t = Thread.currentThread();
         if (Bettermaps.locateMapTaskThreads.containsValue(t)) {
             cir.setReturnValue(true);
         }
