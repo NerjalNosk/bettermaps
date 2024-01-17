@@ -23,7 +23,7 @@ public class CheckedThreadLocalRandomMixin extends LocalRandom {
 
     @Inject(method = "setSeed", at = @At("HEAD"), cancellable = true)
     private void onSetSeedCheckIfMapLocationThread(long seed, CallbackInfo ci) {
-        Thread t = this.owner != null ? this.owner.get() : null;
+        Thread t = Thread.currentThread();
         if (Bettermaps.locateMapTaskThreads.containsValue(t)) {
             super.setSeed(seed);
             ci.cancel();
@@ -32,7 +32,7 @@ public class CheckedThreadLocalRandomMixin extends LocalRandom {
 
     @Inject(method = "next", at = @At("HEAD"), cancellable = true)
     private void onNextCheckIfMapLocationThread(int bits, CallbackInfoReturnable<Integer> cir) {
-        Thread t = this.owner != null ? this.owner.get() : null;
+        Thread t = Thread.currentThread();
         if (Bettermaps.locateMapTaskThreads.containsValue(t)) {
             cir.setReturnValue(super.next(bits));
         }
