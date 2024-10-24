@@ -8,5 +8,9 @@
   "gamerule.doBetterMapFromPlayerPos": "Locate map from player pos",
   "gamerule.doBetterMapFromPlayerPos.description": "Makes the 'Maps of the Unknown' maps locate the structure from the player pos when activated, instead of the original chest pos",
   "gamerule.doBetterMapsDynamicLocating": "Dynamic map structure locating",
-  "gamerule.doBetterMapsDynamicLocating.description": "Makes locating structures threaded, to prevent freezing the world while it is running"
+  "gamerule.doBetterMapsDynamicLocating.description": "Makes locating structures threaded, to prevent freezing the world while it is running",
+  "gamerule.doBetterMapsFeedback": "Do map task OP feedback",
+  "gamerule.doBetterMapsFeedback.description": "Makes starting a location task send feedback to OP chat",
+  "gamerule.betterMapsMaxTasks": "Maximum simultaneous map tasks",
+  "gamerule.betterMapsMaxTasks.description": "Changes how many simultaneous map locating tasks can be run at once"
 }

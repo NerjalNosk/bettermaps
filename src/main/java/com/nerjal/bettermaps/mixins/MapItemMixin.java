@@ -81,7 +81,7 @@ public abstract class MapItemMixin {
         Identifier destId = Identifier.tryParse(explorationNbt.getString(Bettermaps.NBT_EXPLORATION_DEST));
         TagKey<Structure> destination = TagKey.of(RegistryKeys.STRUCTURE, destId);
         NbtCompound posNbt = nbt.getCompound(Bettermaps.NBT_POS_DATA);
-        if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_FROM_PLAYER_POS))) {
+        if (world.getGameRules().getBoolean(Bettermaps.DO_BETTERMAP_FROM_PLAYER_POS)) {
             pos = new Vec3i(posNbt.getInt("x"), posNbt.getInt("y"), posNbt.getInt("z"));
         }
         if (!world.getRegistryKey().getValue().toString().equals(posNbt.getString(Bettermaps.NBT_EXPLORATION_DIM))) {
@@ -98,7 +98,7 @@ public abstract class MapItemMixin {
         if (! user.isCreative()) Bettermaps.lockMap(stack, id);
 
         // task run
-        if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCATING))) {
+        if (world.getGameRules().getBoolean(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCATING)) {
             Bettermaps.LocateTask locateTask = new Bettermaps.LocateTask(task, id);
             Bettermaps.locateMapTaskThreads.putIfAbsent(id, locateTask);
             locateTask.start();

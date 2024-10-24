@@ -39,6 +39,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     modImplementation "maven.modrinth:c2me-fabric:${project.c2me_version}+${project.minecraft_version}"
+    modImplementation include("maven.modrinth:unruled-api:${project.unruled_version}")
 }
 
 // Run once without the following dependency update, then once with

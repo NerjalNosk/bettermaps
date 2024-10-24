@@ -1,5 +1,6 @@
 package com.nerjal.bettermaps;
 
+import mc.recraftors.unruled_api.UnruledApi;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.component.DataComponentTypes;
@@ -18,7 +19,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameRules;
+import net.minecraft.world.GameRules.*;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.Structure;
 import org.jetbrains.annotations.NotNull;
@@ -35,11 +36,17 @@ import static net.minecraft.component.DataComponentTypes.LORE;
 public final class Bettermaps {
     public static final String MOD_ID = "bettermaps";
 
-    public static final String DO_BETTERMAPS = "doBetterMaps";
-    public static final String DO_BETTERMAPS_LOOT = "doBetterMapsLoot";
-    public static final String DO_BETTERMAPS_TRADE = "doBetterMapsTrades";
-    public static final String DO_BETTERMAP_FROM_PLAYER_POS = "doBetterMapFromPlayerPos";
-    public static final String DO_BETTERMAP_DYNAMIC_LOCATING = "doBetterMapsDynamicLocating";
+    private static final String DO_BETTERMAPS_KEY = "doBetterMaps";
+    private static final String DO_BETTERMAPS_LOOT_KEY = "doBetterMapsLoot";
+    private static final String DO_BETTERMAPS_TRADE_KEY = "doBetterMapsTrades";
+    private static final String DO_BETTERMAP_FROM_PLAYER_POS_KEY = "doBetterMapFromPlayerPos";
+    private static final String DO_BETTERMAP_DYNAMIC_LOCATING_KEY = "doBetterMapsDynamicLocating";
+
+    public static final Key<BooleanRule> DO_BETTERMAPS = UnruledApi.registerBoolean(DO_BETTERMAPS_KEY, Category.PLAYER, true);
+    public static final Key<BooleanRule> DO_BETTERMAPS_LOOT = UnruledApi.registerBoolean(DO_BETTERMAPS_LOOT_KEY, Category.DROPS, true);
+    public static final Key<BooleanRule> DO_BETTERMAPS_TRADE = UnruledApi.registerBoolean(DO_BETTERMAPS_TRADE_KEY, Category.MOBS, true);
+    public static final Key<BooleanRule> DO_BETTERMAP_FROM_PLAYER_POS = UnruledApi.registerBoolean(DO_BETTERMAP_FROM_PLAYER_POS_KEY, Category.PLAYER, false);
+    public static final Key<BooleanRule> DO_BETTERMAP_DYNAMIC_LOCATING = UnruledApi.registerBoolean(DO_BETTERMAP_DYNAMIC_LOCATING_KEY, Category.PLAYER, true);
 
     public static final String NBT_POS_DATA = "pos";
     public static final String NBT_EXPLORATION_DATA = "exploration";
@@ -53,23 +60,11 @@ public final class Bettermaps {
 
     public static final Identifier NULL_ID = Identifier.of(Identifier.DEFAULT_NAMESPACE, "_null");
 
-    private static final Map<String, GameRules.Key<GameRules.BooleanRule>> rules = new HashMap<>();
     public static final Map<String, LocateTask> locateMapTaskThreads = new LinkedHashMap<>();
     public static final AtomicInteger taskCounter = new AtomicInteger();
     public static final Lock mapTaskSafeLock = new ReentrantLock();
 
     private static volatile boolean clientPaused = false;
-
-    public static void set(@NotNull String key, GameRules.Key<GameRules.BooleanRule> value) {
-        if (value == null) {
-            throw new NullPointerException();
-        }
-        Bettermaps.rules.putIfAbsent(key, value);
-    }
-
-    public static GameRules.Key<GameRules.BooleanRule> get(@NotNull String key) {
-        return Bettermaps.rules.get(key);
-    }
 
     @Environment(EnvType.CLIENT)
     public static void setClientPaused(boolean b) {
@@ -103,15 +98,15 @@ public final class Bettermaps {
     }
 
     public static boolean isLootEnabled(World w) {
-        return isEnabled(w) && w.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAPS_LOOT));
+        return isEnabled(w) && w.getGameRules().getBoolean(DO_BETTERMAPS_LOOT);
     }
 
     public static boolean isTradeEnabled(World w) {
-        return isEnabled(w) && w.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAPS_TRADE));
+        return isEnabled(w) && w.getGameRules().getBoolean(Bettermaps.DO_BETTERMAPS_TRADE);
     }
 
     public static boolean isEnabled(World w) {
-        return w.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAPS));
+        return w.getGameRules().getBoolean(DO_BETTERMAPS);
     }
 
     public static ItemStack createMap(Vec3d origin, World sourceWorld, TagKey<Structure> destination,
