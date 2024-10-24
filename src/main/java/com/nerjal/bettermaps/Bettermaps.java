@@ -2,13 +2,20 @@ package com.nerjal.bettermaps;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.LoreComponent;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.map.MapDecorationType;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtString;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.TagKey;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameRules;
@@ -22,14 +29,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static net.minecraft.component.DataComponentTypes.CUSTOM_DATA;
+import static net.minecraft.component.DataComponentTypes.LORE;
+
 public final class Bettermaps {
+    public static final String MOD_ID = "bettermaps";
+
     public static final String DO_BETTERMAPS = "doBetterMaps";
     public static final String DO_BETTERMAPS_LOOT = "doBetterMapsLoot";
     public static final String DO_BETTERMAPS_TRADE = "doBetterMapsTrades";
     public static final String DO_BETTERMAP_FROM_PLAYER_POS = "doBetterMapFromPlayerPos";
     public static final String DO_BETTERMAP_DYNAMIC_LOCATING = "doBetterMapsDynamicLocating";
 
-    public static final String NBT_IS_BETTER_MAP = "isExplorationMap";
     public static final String NBT_POS_DATA = "pos";
     public static final String NBT_EXPLORATION_DATA = "exploration";
     public static final String NBT_EXPLORATION_ICON = "decoration";
@@ -39,6 +50,8 @@ public final class Bettermaps {
     public static final String NBT_EXPLORATION_SKIP = "skipExistingChunks";
     public static final String NBT_EXPLORATION_ZOOM = "zoom";
     public static final String NBT_MAP_LOCK = "_lock";
+
+    public static final Identifier NULL_ID = Identifier.of(Identifier.DEFAULT_NAMESPACE, "_null");
 
     private static final Map<String, GameRules.Key<GameRules.BooleanRule>> rules = new HashMap<>();
     public static final Map<String, LocateTask> locateMapTaskThreads = new LinkedHashMap<>();
@@ -102,11 +115,11 @@ public final class Bettermaps {
     }
 
     public static ItemStack createMap(Vec3d origin, World sourceWorld, TagKey<Structure> destination,
-                                      Identifier destWorld, byte decoration, byte zoom, int radius,
+                                      Identifier destWorld, RegistryEntry<MapDecorationType> decoration, byte zoom, int radius,
                                       boolean skipExistingChunks, @Nullable Text displayName) {
         // pos logic
         NbtCompound nbtPos = new NbtCompound();
-        nbtPos.putString(Bettermaps.NBT_EXPLORATION_DIM, sourceWorld.getDimensionKey().getValue().toString());
+        nbtPos.putString(Bettermaps.NBT_EXPLORATION_DIM, sourceWorld.getRegistryKey().getValue().toString());
         nbtPos.putDouble("x", origin.getX());
         nbtPos.putDouble("y", origin.getY());
         nbtPos.putDouble("z", origin.getZ());
@@ -114,7 +127,7 @@ public final class Bettermaps {
         // function args logic
         NbtCompound explorationNbt = new NbtCompound();
         explorationNbt.putString(Bettermaps.NBT_EXPLORATION_DEST, destination.id().toString());
-        explorationNbt.putByte(Bettermaps.NBT_EXPLORATION_ICON, decoration);
+        explorationNbt.putString(Bettermaps.NBT_EXPLORATION_ICON, decoration.getKey().get().getValue().toString());
         explorationNbt.putByte(Bettermaps.NBT_EXPLORATION_ZOOM, zoom);
         explorationNbt.putInt(Bettermaps.NBT_EXPLORATION_RADIUS, radius);
         explorationNbt.putBoolean(Bettermaps.NBT_EXPLORATION_SKIP, skipExistingChunks);
@@ -123,20 +136,35 @@ public final class Bettermaps {
         ItemStack stack = new ItemStack(Items.MAP);
         NbtCompound nbt = new NbtCompound();
         nbt.put(Bettermaps.NBT_POS_DATA, nbtPos);
-        nbt.putBoolean(Bettermaps.NBT_IS_BETTER_MAP, true);
         nbt.put(Bettermaps.NBT_EXPLORATION_DATA, explorationNbt);
 
-        NbtCompound display = new NbtCompound();
-        NbtList lore = new NbtList();
-        lore.add(NbtString.of(String.format("{\"text\": \"[%s]\", \"color\": \"dark_gray\", \"italic\":false}", destWorld)));
-        display.put("Lore", lore);
-        nbt.put("display", display);
+        MutableText lore = Text.literal(String.format("[%s]", destWorld)).formatted(Formatting.DARK_GRAY);
         if (displayName != null) {
-            stack.setCustomName(displayName);
+            stack.set(DataComponentTypes.CUSTOM_NAME, displayName);
         }
 
-        stack.setNbt(nbt);
+        storeMapData(nbt, stack, lore);
         stack.setCount(1);
         return stack;
+    }
+
+    public static void storeMapData(NbtCompound nbt, ItemStack stack, Text lore) {
+        NbtComponent component = stack.getComponents().getOrDefault(CUSTOM_DATA, NbtComponent.DEFAULT);
+        component = component.apply(c -> c.put(MOD_ID, nbt));
+        stack.set(CUSTOM_DATA, component);
+        if (lore != null) {
+            LoreComponent c = LoreComponent.DEFAULT.with(lore);
+            stack.set(LORE, c);
+        }
+    }
+
+    public static void lockMap(ItemStack stack, String id) {
+        NbtComponent component = stack.getComponents().getOrDefault(CUSTOM_DATA, NbtComponent.DEFAULT);
+        component.apply(c -> {
+            if (!c.contains(MOD_ID)) return;
+            NbtElement element = c.get(MOD_ID);
+            if (!(element instanceof NbtCompound compound)) return;
+            compound.put(NBT_MAP_LOCK, NbtString.of(id));
+        });
     }
 }

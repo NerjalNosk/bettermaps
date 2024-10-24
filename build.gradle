@@ -1,7 +1,7 @@
 import java.nio.file.Files
 
 plugins {
-    id 'fabric-loom' version '1.2-SNAPSHOT'
+    id 'fabric-loom' version '1.7-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -38,14 +38,13 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.minecraft_version}+build.${project.yarn_build}"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    modImplementation "maven.modrinth:c2me-fabric:${project.c2me_version}"
+    modImplementation "maven.modrinth:c2me-fabric:${project.c2me_version}+${project.minecraft_version}"
 }
 
-def c2me_version_short = "${project.c2me_version}".substring(0, "${project.c2me_version}".length()-"+${project.minecraft_version}".length())
 // Run once without the following dependency update, then once with
 dependencies {
-    modCompileOnly files(unzip("${remapped_folder}/c2me-fabric/${project.c2me_version}/c2me-fabric-${project.c2me_version}.jar",
-            "c2me-fixes-worldgen-threading-issues-mc${project.minecraft_version}-${c2me_version_short}.jar", ".local")
+    modCompileOnly files(unzip("${remapped_folder}/c2me-fabric/${project.c2me_version}+${project.minecraft_version}/c2me-fabric-${project.c2me_version}+${project.minecraft_version}.jar",
+            "c2me-fixes-worldgen-threading-issues-mc${project.minecraft_version}-${project.c2me_version}.jar", ".local")
     )
 }
 

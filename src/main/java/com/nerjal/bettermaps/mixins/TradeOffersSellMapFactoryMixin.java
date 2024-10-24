@@ -4,13 +4,15 @@ import com.nerjal.bettermaps.Bettermaps;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.map.MapIcon;
+import net.minecraft.item.map.MapDecorationType;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.village.TradeOffer;
 import net.minecraft.village.TradeOffers;
+import net.minecraft.village.TradedItem;
 import net.minecraft.world.gen.structure.Structure;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,10 +22,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Optional;
+
 @Mixin(TradeOffers.SellMapFactory.class)
 public abstract class TradeOffersSellMapFactoryMixin {
     @Shadow @Final private TagKey<Structure> structure;
-    @Shadow @Final private MapIcon.Type iconType;
+    @Shadow @Final private RegistryEntry<MapDecorationType> decoration;
     @Shadow @Final private String nameKey;
     @Shadow @Final private int price;
     @Shadow @Final private int maxUses;
@@ -38,9 +42,8 @@ public abstract class TradeOffersSellMapFactoryMixin {
         }
         Identifier target = explorationTargetWorld == null ? entity.getWorld().getRegistryKey().getValue() : explorationTargetWorld;
         ItemStack stack = Bettermaps.createMap(entity.getPos(), entity.getWorld(), structure, target,
-                iconType.getId(), (byte) 2, 100, true, Text.translatable(nameKey));
-        stack.setCustomName(Text.translatable(nameKey));
-        cir.setReturnValue(new TradeOffer(new ItemStack(Items.EMERALD, price), new ItemStack(Items.COMPASS), stack, maxUses, experience, 0.2F));
+                decoration, (byte) 2, 100, true, Text.translatable(nameKey));
+        cir.setReturnValue(new TradeOffer(new TradedItem(Items.EMERALD, price), Optional.of(new TradedItem(Items.COMPASS, 1)), stack, maxUses, experience, 0.2F));
         cir.cancel();
     }
 }

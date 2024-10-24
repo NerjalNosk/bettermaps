@@ -7,7 +7,6 @@
   "mixins": [
     "CommandManagerMixin",
     "ExplorationMapLootFunctionMixin",
-    "ExplorationMapLootFunctionMixin$SerializerMixin",
     "GamerulesInitializer",
     "MapItemMixin",
     "ServerWorldMixin",

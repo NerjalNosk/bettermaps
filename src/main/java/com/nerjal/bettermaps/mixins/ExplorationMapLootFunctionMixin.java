@@ -1,16 +1,18 @@
 package com.nerjal.bettermaps.mixins;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonObject;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.nerjal.bettermaps.BetterMapItem;
 import com.nerjal.bettermaps.Bettermaps;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.map.MapIcon;
-import net.minecraft.loot.condition.LootCondition;
+import net.minecraft.item.map.MapDecorationType;
 import net.minecraft.loot.context.LootContext;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.loot.function.ExplorationMapLootFunction;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;
@@ -26,17 +28,18 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 @Mixin(ExplorationMapLootFunction.class)
 public abstract class ExplorationMapLootFunctionMixin implements BetterMapItem {
 
-    @Shadow @Final TagKey<Structure> destination;
-    @Shadow @Final MapIcon.Type decoration;
-    @Shadow @Final byte zoom;
-    @Shadow @Final int searchRadius;
-    @Shadow @Final boolean skipExistingChunks;
-    @Unique
-    private Identifier explorationTargetWorldId;
+    @Shadow @Final private TagKey<Structure> destination;
+    @Shadow @Final private byte zoom;
+    @Shadow @Final private int searchRadius;
+    @Shadow @Final private boolean skipExistingChunks;
+    @Shadow @Final private RegistryEntry<MapDecorationType> decoration;
+
+    @Unique private Identifier explorationTargetWorldId;
 
     @Inject(method = "process", at = @At("HEAD"), cancellable = true)
     private void processInjector(
@@ -54,17 +57,14 @@ public abstract class ExplorationMapLootFunctionMixin implements BetterMapItem {
         Vec3d origin = context.get(LootContextParameters.ORIGIN);
         Objects.requireNonNull(origin);
 
-        Identifier targetWorld = context.getWorld().getDimensionKey().getValue();
-        if (this.explorationTargetWorldId != null) {
+        Identifier targetWorld = context.getWorld().getRegistryKey().getValue();
+        if (this.explorationTargetWorldId != null && !this.explorationTargetWorldId.equals(Bettermaps.NULL_ID)) {
             targetWorld = this.explorationTargetWorldId;
         }
 
-        Text name = null;
-        if (stack.hasCustomName()) {
-            name = stack.getName();
-        }
+        Text name = stack.get(DataComponentTypes.CUSTOM_NAME);
         ItemStack newStack = Bettermaps.createMap(origin, context.getWorld(), destination, targetWorld,
-                decoration.getId(), zoom, searchRadius, skipExistingChunks, name);
+                decoration, zoom, searchRadius, skipExistingChunks, name);
         newStack.setCount(stack.getCount());
 
         cir.setReturnValue(newStack);
@@ -76,16 +76,17 @@ public abstract class ExplorationMapLootFunctionMixin implements BetterMapItem {
         this.explorationTargetWorldId = id;
     }
 
-    @Mixin(ExplorationMapLootFunction.Serializer.class)
-    abstract static class SerializerMixin {
-        @Inject(method = "fromJson(Lcom/google/gson/JsonObject;Lcom/google/gson/JsonDeserializationContext;[Lnet/minecraft/loot/condition/LootCondition;)Lnet/minecraft/loot/function/ExplorationMapLootFunction;", at = @At("TAIL"))
-        private void fromJsonTailDimensionCapture(
-                @NotNull JsonObject json, JsonDeserializationContext context, LootCondition[] conditions,
-                CallbackInfoReturnable<ExplorationMapLootFunction> cir) {
-            if (json.has(Bettermaps.NBT_EXPLORATION_DIM)) {
-                ((BetterMapItem) cir.getReturnValue()).bettermaps$withDimension(
-                        Identifier.tryParse(json.get(Bettermaps.NBT_EXPLORATION_DIM).getAsString()));
-            }
-        }
+    @ModifyExpressionValue(method = "<clinit>", at = @At(value = "INVOKE", target = "Lcom/mojang/serialization/codecs/RecordCodecBuilder;mapCodec(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;"))
+    private static MapCodec<ExplorationMapLootFunction> codecExpand(MapCodec<ExplorationMapLootFunction> original) {
+        return RecordCodecBuilder.mapCodec(
+                instance -> instance.group(
+                        original.forGetter(Function.identity()),
+                        Identifier.CODEC.optionalFieldOf(Bettermaps.NBT_EXPLORATION_DIM, Bettermaps.NULL_ID)
+                                .forGetter(o -> ((ExplorationMapLootFunctionMixin)((Object)o)).explorationTargetWorldId)
+                ).apply(instance, (i,a) -> {
+                    ((ExplorationMapLootFunctionMixin)((Object)i)).bettermaps$withDimension(a);
+                    return i;
+                })
+        );
     }
 }

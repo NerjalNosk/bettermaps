@@ -1,15 +1,19 @@
 package com.nerjal.bettermaps.mixins;
 
 import com.nerjal.bettermaps.Bettermaps;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.EmptyMapItem;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.map.MapIcon;
+import net.minecraft.item.map.MapDecorationType;
 import net.minecraft.item.map.MapState;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
@@ -23,14 +27,14 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.Structure;
 import org.jetbrains.annotations.NotNull;
+import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.UUID;
-
+@Debug
 @Mixin(EmptyMapItem.class)
 public abstract class MapItemMixin {
 
@@ -46,11 +50,14 @@ public abstract class MapItemMixin {
         ServerWorld world = (ServerWorld) w;
         ItemStack stack = user.getStackInHand(hand);
         if (stack.isEmpty()) return;
-        NbtCompound sourceNbt = stack.getNbt();
-        if (sourceNbt == null) return;
-        NbtCompound nbt = sourceNbt.copy();
-        if (! nbt.contains(Bettermaps.NBT_IS_BETTER_MAP, NbtElement.BYTE_TYPE)) return;
-        if (! nbt.getBoolean(Bettermaps.NBT_IS_BETTER_MAP)) return;
+        NbtComponent component = stack.get(DataComponentTypes.CUSTOM_DATA);
+        if (component == null) {
+            return;
+        }
+        NbtCompound srcNbt = component.copyNbt();
+        if (!srcNbt.contains(Bettermaps.MOD_ID)) return;
+        NbtElement e = srcNbt.get(Bettermaps.MOD_ID);
+        if (!(e instanceof NbtCompound nbt)) return;
         if (! nbt.contains(Bettermaps.NBT_EXPLORATION_DATA, NbtElement.COMPOUND_TYPE)) return;
 
         if (nbt.contains(Bettermaps.NBT_MAP_LOCK)) {
@@ -77,7 +84,7 @@ public abstract class MapItemMixin {
         if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_FROM_PLAYER_POS))) {
             pos = new Vec3i(posNbt.getInt("x"), posNbt.getInt("y"), posNbt.getInt("z"));
         }
-        if (!world.getDimensionKey().getValue().toString().equals(posNbt.getString(Bettermaps.NBT_EXPLORATION_DIM))) {
+        if (!world.getRegistryKey().getValue().toString().equals(posNbt.getString(Bettermaps.NBT_EXPLORATION_DIM))) {
             user.sendMessage(Text.literal("x").formatted(Formatting.RED, Formatting.BOLD), true);
             cir.setReturnValue(TypedActionResult.consume(stack));
             cir.cancel();
@@ -88,7 +95,7 @@ public abstract class MapItemMixin {
         Vec3i fPos = pos;
         String id = String.format("%d-%s", Bettermaps.taskCounter.incrementAndGet(), user.getDisplayName().getString());
         Runnable task = ()->locationTask(world, stack, nbt, explorationNbt, radius, skip, fPos, destination, user, id);
-        if (! user.isCreative()) sourceNbt.putString(Bettermaps.NBT_MAP_LOCK, id);
+        if (! user.isCreative()) Bettermaps.lockMap(stack, id);
 
         // task run
         if (world.getGameRules().getBoolean(Bettermaps.get(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCATING))) {
@@ -127,7 +134,11 @@ public abstract class MapItemMixin {
 
         // map data
         byte zoom = explorationNbt.getByte(Bettermaps.NBT_EXPLORATION_ZOOM);
-        MapIcon.Type decoration = MapIcon.Type.byId(explorationNbt.getByte(Bettermaps.NBT_EXPLORATION_ICON));
+        RegistryEntry<MapDecorationType> decoration = Registries.MAP_DECORATION_TYPE.getEntry(
+                Registries.MAP_DECORATION_TYPE.get(
+                        Identifier.tryParse(explorationNbt.getString(Bettermaps.NBT_EXPLORATION_ICON))
+                )
+        );
 
         // map creation
         ItemStack itemStack = FilledMapItem.createMap(world, blockPos.getX(), blockPos.getZ(), zoom, true, true);
@@ -135,9 +146,8 @@ public abstract class MapItemMixin {
         MapState.addDecorationsNbt(itemStack, blockPos, "+", decoration);
         nbt.remove(Bettermaps.NBT_POS_DATA);
         nbt.remove(Bettermaps.NBT_EXPLORATION_DATA);
-        nbt.remove(Bettermaps.NBT_IS_BETTER_MAP);
         nbt.remove(Bettermaps.NBT_MAP_LOCK);
-        itemStack.getOrCreateNbt().copyFrom(nbt);
+        Bettermaps.storeMapData(nbt, itemStack, null);
 
         // give to user
         if (! user.getInventory().insertStack(itemStack.copy())) {
