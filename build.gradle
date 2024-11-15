@@ -13,6 +13,10 @@ repositories {
         name = "Modrinth"
         url = "https://api.modrinth.com/maven"
     }
+    maven {
+        name = "Nucleoid"
+        url = "https://maven.nucleoid.xyz"
+    }
 }
 
 if (!Files.exists(file(".local/").toPath())) Files.createDirectory(file(".local").toPath())
@@ -40,6 +44,7 @@ dependencies {
 
     modImplementation "maven.modrinth:c2me-fabric:${project.c2me_version}+${project.minecraft_version}"
     modImplementation include("maven.modrinth:unruled-api:${project.unruled_version}")
+    modImplementation include("xyz.nucleoid:server-translations-api:${project.server_translation_version}")
 }
 
 // Run once without the following dependency update, then once with
