@@ -8,10 +8,14 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.suggestion.SuggestionProviders;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Comparator;
+import java.util.List;
 
 import static net.minecraft.server.command.CommandManager.literal;
 
@@ -40,9 +44,27 @@ public final class BetterMapsCommand {
     }
 
     private static int executeList(@NotNull CommandContext<ServerCommandSource> context) {
-        context.getSource().sendMessage(Text.literal(
-                String.join("\n", Bettermaps.locateMapTaskThreads.keySet().stream().toList())
-        ).formatted(Formatting.YELLOW));
+        Bettermaps.mapTaskStepLock.lock();
+        if (Bettermaps.locateMapTaskThreads.isEmpty()) {
+            context.getSource().sendMessage(Text.literal("- 0 -"));
+            return 0;
+        }
+        MutableText t = Text.empty();
+        List<MutableText> list = Bettermaps.locateMapTaskThreads.entrySet().stream()
+                .sorted(Comparator.comparing(e -> (e.getValue().isQueued() ? 1 : 0) + e.getValue().getTaskId()))
+                .map(e -> {
+                    if (e.getValue().isQueued()) {
+                        return Text.literal(String.format("[Queued] %s", e.getKey())).formatted(Formatting.GOLD);
+                    } else {
+                        return Text.literal(e.getKey()).formatted(Formatting.YELLOW);
+                    }
+                }).toList();
+        Bettermaps.mapTaskStepLock.unlock();
+        for (int i = 0; i < list.size(); i++) {
+            t.append(list.get(i));
+            if (i+1 < list.size()) t.append(Text.literal("\n"));
+        }
+        context.getSource().sendMessage(t);
         return 0;
     }
 
@@ -51,7 +73,6 @@ public final class BetterMapsCommand {
         if (Bettermaps.locateMapTaskThreads.containsKey(id)) {
             Bettermaps.LocateTask task = Bettermaps.locateMapTaskThreads.get(id);
             task.interrupt();
-            Bettermaps.locateMapTaskThreads.remove(id);
             context.getSource().sendFeedback(
                     () -> Text.literal(id).formatted(Formatting.GREEN),
                     false

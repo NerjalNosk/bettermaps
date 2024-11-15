@@ -34,7 +34,8 @@ public class MinecraftClientMixin {
                 Map.Entry<String, Bettermaps.LocateTask> entry = taskIterator.next();
                 Bettermaps.LocateTask task = entry.getValue();
                 if (task.isInterrupted()) {
-                    tasks.put(entry.getKey(), new Bettermaps.LocateTask(task.task, entry.getKey()));
+                    //noinspection DataFlowIssue - Shouldn't be risen here, for it should only be met in single-player worlds
+                    tasks.put(entry.getKey(), new Bettermaps.LocateTask(MinecraftClient.getInstance().getServer().getOverworld(), task.task, entry.getKey()));
                     taskIterator.remove();
                 }
             }

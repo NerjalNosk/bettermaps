@@ -14,6 +14,7 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.entry.RegistryEntryList;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.text.Text;
@@ -33,6 +34,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Optional;
 
 @Debug
 @Mixin(EmptyMapItem.class)
@@ -79,7 +82,10 @@ public abstract class MapItemMixin {
         Vec3i pos = new Vec3i((int) p.x, (int) p.y, (int) p.z);
 
         Identifier destId = Identifier.tryParse(explorationNbt.getString(Bettermaps.NBT_EXPLORATION_DEST));
-        TagKey<Structure> destination = TagKey.of(RegistryKeys.STRUCTURE, destId);
+        TagKey<Structure> destTag = TagKey.of(RegistryKeys.STRUCTURE, destId);
+        Optional<RegistryEntryList.Named<Structure>> entryList = world.getRegistryManager().get(RegistryKeys.STRUCTURE).getEntryList(destTag);
+        Optional<RegistryEntry.Reference<Structure>> entry = world.getRegistryManager().get(RegistryKeys.STRUCTURE).getEntry(destId);
+
         NbtCompound posNbt = nbt.getCompound(Bettermaps.NBT_POS_DATA);
         if (world.getGameRules().getBoolean(Bettermaps.DO_BETTERMAP_FROM_PLAYER_POS)) {
             pos = new Vec3i(posNbt.getInt("x"), posNbt.getInt("y"), posNbt.getInt("z"));
@@ -94,13 +100,17 @@ public abstract class MapItemMixin {
         // locate task setup
         Vec3i fPos = pos;
         String id = String.format("%d-%s", Bettermaps.taskCounter.incrementAndGet(), user.getDisplayName().getString());
-        Runnable task = ()->locationTask(world, stack, nbt, explorationNbt, radius, skip, fPos, destination, user, id);
+        RegistryEntryList<Structure> entries = entryList.map(s -> (RegistryEntryList<Structure>) s).or(() -> entry.map(RegistryEntryList::of)).orElseThrow();
+        Runnable task = ()->locationTask(world, stack, nbt, explorationNbt, radius, skip, fPos, entries, user, id);
         if (! user.isCreative()) Bettermaps.lockMap(stack, id);
 
         // task run
         if (world.getGameRules().getBoolean(Bettermaps.DO_BETTERMAP_DYNAMIC_LOCATING)) {
-            Bettermaps.LocateTask locateTask = new Bettermaps.LocateTask(task, id);
+            Bettermaps.LocateTask locateTask = new Bettermaps.LocateTask(world, task, id);
             Bettermaps.locateMapTaskThreads.putIfAbsent(id, locateTask);
+            if (w.getGameRules().getBoolean(Bettermaps.DO_BETTERMAPS_FEEDBACK)) {
+                world.getServer().getCommandSource().sendFeedback(() -> Text.translatable("bettermaps.feedback", user.getDisplayName(), id), true);
+            }
             locateTask.start();
             user.sendMessage(Text.literal("\u2714").formatted(Formatting.GREEN, Formatting.BOLD), true);
         } else {
@@ -114,8 +124,9 @@ public abstract class MapItemMixin {
     @Unique
     private static void locationTask(@NotNull ServerWorld world, @NotNull ItemStack stack, @NotNull NbtCompound nbt,
                                      @NotNull NbtCompound explorationNbt, int radius, boolean skip, @NotNull Vec3i pos,
-                                     @NotNull TagKey<Structure> destination, @NotNull PlayerEntity user, String lock) {
-        BlockPos blockPos = world.locateStructure(destination, new BlockPos(pos), radius, skip);
+                                     RegistryEntryList<Structure> entries, @NotNull PlayerEntity user, String lock) {
+        //noinspection DataFlowIssue
+        BlockPos blockPos = world.getChunkManager().getChunkGenerator().locateStructure(world, entries, new BlockPos(pos), radius, skip).getFirst();
 
         if (blockPos == null) {
             user.sendMessage(Text.literal("x").formatted(Formatting.DARK_BLUE, Formatting.BOLD), true);
@@ -156,6 +167,5 @@ public abstract class MapItemMixin {
         if (! user.isCreative()) stack.decrement(1);
         Bettermaps.locateMapTaskThreads.remove(lock);
         Bettermaps.mapTaskSafeLock.unlock();
-        Thread.currentThread().interrupt();
     }
 }
