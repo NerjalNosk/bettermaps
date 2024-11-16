@@ -21,7 +21,9 @@ repositories {
 
 if (!Files.exists(file(".local/").toPath())) Files.createDirectory(file(".local").toPath())
 
-def remapped_mc = "${project.minecraft_version.split("\\.").join("_")}"
+def mc_ver_full = "${project.minecraft_version}.${project.minecraft_sub}"
+def sta_ver_full = "${project.server_translation_version}+${mc_ver_full}-${project.server_translation_sub}"
+def remapped_mc = "${mc_ver_full.split("\\.").join("_")}"
 def remapped_folder_name = "net_fabricmc_yarn_${remapped_mc}_${remapped_mc}_build_${project.yarn_build}"
 def remapped_folder = ".gradle/loom-cache/remapped_mods/${remapped_folder_name}/maven/modrinth/"
 def unzip =  (CharSequence sourceFile, CharSequence fileName, CharSequence destinationFile) -> {
@@ -38,26 +40,26 @@ def unzip =  (CharSequence sourceFile, CharSequence fileName, CharSequence desti
 
 dependencies {
     // To change the versions see the gradle.properties file
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.minecraft_version}+build.${project.yarn_build}"
+    minecraft "com.mojang:minecraft:${mc_ver_full}"
+    mappings "net.fabricmc:yarn:${mc_ver_full}+build.${project.yarn_build}"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    modImplementation "maven.modrinth:c2me-fabric:${project.c2me_version}+${project.minecraft_version}"
-    modImplementation include("maven.modrinth:unruled-api:${project.unruled_version}")
-    modImplementation include("xyz.nucleoid:server-translations-api:${project.server_translation_version}")
-}
+    modImplementation include("maven.modrinth:unruled-api:${project.unruled_version}-fabric+${project.minecraft_version}")
+    modImplementation include("xyz.nucleoid:server-translations-api:${sta_ver_full}")
 
-// Run once without the following dependency update, then once with
-dependencies {
-    modCompileOnly files(unzip("${remapped_folder}/c2me-fabric/${project.c2me_version}+${project.minecraft_version}/c2me-fabric-${project.c2me_version}+${project.minecraft_version}.jar",
-            "c2me-fixes-worldgen-threading-issues-mc${project.minecraft_version}-${project.c2me_version}.jar", ".local")
-    )
+    modRuntimeOnly "maven.modrinth:c2me-fabric:${project.c2me_version}+${mc_ver_full}"
+    modCompileOnly files (unzip(
+            "${remapped_folder}/c2me-fabric/${project.c2me_version}+${mc_ver_full}/c2me-fabric-${project.c2me_version}+${mc_ver_full}.jar",
+            "c2me-fixes-worldgen-threading-issues-mc${mc_ver_full}-${project.c2me_version}.jar",
+            ".local"
+    ))
 }
 
 processResources {
     inputs.property "version", project.version
-    inputs.property "minecraft_version", project.minecraft_version
+    inputs.property "minecraft_version", mc_ver_full
     inputs.property "loader_version", project.loader_version
+    inputs.property "unruled_version", project.unruled_version
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {
@@ -78,7 +80,7 @@ java {
     if (JavaVersion.current() < javaVersion) {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
-    archivesBaseName = "${project.mod_id}-mc${project.minecraft_version}"
+    archivesBaseName = "${project.mod_id}-mc${mc_ver_full}"
     withSourcesJar()
 }
 
@@ -90,4 +92,14 @@ jar {
 
 loom {
     accessWidenerPath = file("src/main/resources/${project.mod_id}.accesswidener")
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+    }
 }
