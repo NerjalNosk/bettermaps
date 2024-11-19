@@ -61,6 +61,7 @@ public final class Bettermaps {
     public static final Key<BooleanRule> DO_BETTERMAP_FROM_PLAYER_POS = UnruledApi.registerBoolean(DO_BETTERMAP_FROM_PLAYER_POS_KEY, Category.PLAYER, false);
     public static final Key<BooleanRule> DO_BETTERMAP_DYNAMIC_LOCATING = UnruledApi.registerBoolean(DO_BETTERMAP_DYNAMIC_LOCATING_KEY, Category.PLAYER, true);
     public static final Key<BooleanRule> DO_BETTERMAPS_FEEDBACK = UnruledApi.registerBoolean(DO_BETTERMAPS_FEEDBACK_KEY, Category.CHAT, false);
+    @SuppressWarnings("unused")
     public static final Key<IntRule> BETTERMAPS_MAX_TASKS = UnruledApi.registerInt(BETTERMAPS_MAX_TASKS_KEY, Category.MISC, 8, (s, i) -> {
         mapTaskStepLock.lock();
         int j = i.get();
@@ -162,14 +163,6 @@ public final class Bettermaps {
         }
     }
 
-    public static boolean acquire() {
-        return mapTaskMaxSemaphore.tryAcquire();
-    }
-
-    public static void release() {
-        mapTaskMaxSemaphore.release();
-    }
-
     public static boolean isLootEnabled(World w) {
         return isEnabled(w) && w.getGameRules().getBoolean(DO_BETTERMAPS_LOOT);
     }
@@ -195,6 +188,7 @@ public final class Bettermaps {
         // function args logic
         NbtCompound explorationNbt = new NbtCompound();
         explorationNbt.putString(Bettermaps.NBT_EXPLORATION_DEST, destination.id().toString());
+        //noinspection OptionalGetWithoutIsPresent
         explorationNbt.putString(Bettermaps.NBT_EXPLORATION_ICON, decoration.getKey().get().getValue().toString());
         explorationNbt.putByte(Bettermaps.NBT_EXPLORATION_ZOOM, zoom);
         explorationNbt.putInt(Bettermaps.NBT_EXPLORATION_RADIUS, radius);

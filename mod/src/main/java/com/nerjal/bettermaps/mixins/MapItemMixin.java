@@ -99,6 +99,7 @@ public abstract class MapItemMixin {
 
         // locate task setup
         Vec3i fPos = pos;
+        //noinspection DataFlowIssue
         String id = String.format("%d-%s", Bettermaps.taskCounter.incrementAndGet(), user.getDisplayName().getString());
         RegistryEntryList<Structure> entries = entryList.map(s -> (RegistryEntryList<Structure>) s).or(() -> entry.map(RegistryEntryList::of)).orElseThrow();
         Runnable task = ()->locationTask(world, stack, nbt, explorationNbt, radius, skip, fPos, entries, user, id);

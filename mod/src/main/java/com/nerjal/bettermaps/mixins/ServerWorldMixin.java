@@ -21,6 +21,7 @@ public abstract class ServerWorldMixin {
         });
     }
 
+    @SuppressWarnings("DiscouragedShift")
     @Inject(method = "stop", at = @At(value = "INVOKE", target = "Ljava/lang/Thread;join()V", shift = At.Shift.BEFORE))
     private void beforeStopInterruptMapThreadsInjector(boolean waitForShutdown, CallbackInfo ci) {
         Bettermaps.locateMapTaskThreads.forEach((id, task) -> {

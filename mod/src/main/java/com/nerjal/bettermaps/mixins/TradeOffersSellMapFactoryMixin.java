@@ -32,7 +32,7 @@ public abstract class TradeOffersSellMapFactoryMixin {
     @Shadow @Final private int price;
     @Shadow @Final private int maxUses;
     @Shadow @Final private int experience;
-    @Unique
+    @Unique @SuppressWarnings("unused")
     private Identifier explorationTargetWorld; // useless up to this day, will try to follow the vanilla behaviour and search in current dimension
 
     @Inject(method = "create", at = @At("HEAD"), cancellable = true)

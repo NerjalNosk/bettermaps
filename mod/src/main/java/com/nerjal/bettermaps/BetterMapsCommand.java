@@ -43,6 +43,7 @@ public final class BetterMapsCommand {
         );
     }
 
+    @SuppressWarnings("SameReturnValue")
     private static int executeList(@NotNull CommandContext<ServerCommandSource> context) {
         Bettermaps.mapTaskStepLock.lock();
         if (Bettermaps.locateMapTaskThreads.isEmpty()) {
