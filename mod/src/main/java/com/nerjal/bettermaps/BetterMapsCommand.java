@@ -23,7 +23,7 @@ public final class BetterMapsCommand {
     private BetterMapsCommand(){}
 
     public static final SuggestionProvider<ServerCommandSource> TASKS = SuggestionProviders.register(
-            new Identifier("tasks"),
+            Identifier.ofVanilla("tasks"),
             (context, builder) -> CommandSource.suggestMatching(Bettermaps.locateMapTaskThreads.keySet(), builder)
     );
 

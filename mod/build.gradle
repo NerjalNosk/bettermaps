@@ -1,0 +1,87 @@
+plugins {
+    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+repositories {
+    maven  {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
+    maven {
+        name = "Nucleoid"
+        url = "https://maven.nucleoid.xyz"
+    }
+}
+
+def mc_ver_full = project.minecraft_sub.length() == 0 ? project.minecraft_version : "${project.minecraft_version}.${project.minecraft_sub}"
+def c2me_jFile = "c2me-fabric-mc${mc_ver_full}-${project.c2me_version}.jar"
+def sta_ver_full = "${project.server_translation_version}+${mc_ver_full}-${project.server_translation_sub}"
+
+buildDir(rootProject.buildDir)
+
+tasks.dependencies.dependsOn project(':c2me_dl').tasks.named("build")
+dependencies {
+    // To change the versions see the gradle.properties file
+    minecraft "com.mojang:minecraft:${mc_ver_full}"
+    mappings "net.fabricmc:yarn:${mc_ver_full}+build.${project.yarn_build}"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    modImplementation include("maven.modrinth:unruled-api:${project.unruled_version}-fabric+1.20")
+    modImplementation include("xyz.nucleoid:server-translations-api:${sta_ver_full}")
+
+    modRuntimeOnly "maven.modrinth:c2me-fabric:${project.c2me_version}+${mc_ver_full}"
+    modCompileOnly files(rootProject.file(".local/${c2me_jFile}"))
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "minecraft_version", mc_ver_full
+    inputs.property "loader_version", project.loader_version
+    inputs.property "unruled_version", project.unruled_version
+    filteringCharset "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand inputs.properties
+    }
+}
+
+def targetJavaVersion = 17
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        it.options.release = targetJavaVersion
+    }
+}
+
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+    archivesBaseName = "${project.mod_id}-mc${mc_ver_full}"
+    withSourcesJar()
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${roject.mod_id}"}
+    }
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/${project.mod_id}.accesswidener")
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+    }
+}

@@ -1,0 +1,54 @@
+import java.nio.file.Files
+
+plugins {
+    id 'java'
+    id 'base'
+}
+
+def toUrl = (CharSequence str) -> URLEncoder.encode(str, "UTF-8")
+
+def mc_ver_full = project.minecraft_sub.length() == 0 ? project.minecraft_version : "${project.minecraft_version}.${project.minecraft_sub}"
+def c2me_jFile = "c2me-fabric-mc${mc_ver_full}-${project.c2me_version}.jar"
+def c2me_url = "https://cdn.modrinth.com/data/${project.c2me_project_id}/versions/${project.c2me_version_id}/${toUrl(c2me_jFile)}"
+
+tasks.register('downloadDelegate') {
+    ext {
+        downloadURL = c2me_url
+        fileToExtract = "c2me-fixes-worldgen-threading-issues-mc${mc_ver_full}-${project.c2me_version}.jar"
+        destFile = rootProject.file(".local/${c2me_jFile}")
+    }
+
+    inputs.property('downloadUrl', downloadURL)
+    inputs.property('fileToExtract', fileToExtract)
+    outputs.file(destFile)
+    buildDir(destFile.parentFile)
+
+    doLast {
+        File destDir = destFile.parentFile
+        destDir.mkdirs()
+
+        File downloadFile = new File(temporaryDir, 'download.jar')
+        new URL(downloadURL).withInputStream { i ->
+            downloadFile.withOutputStream { it << i }
+        }
+
+        def t = project.copy {
+            from ( zipTree(downloadFile).filter { it.name == fileToExtract }.first() )
+            into ( destDir )
+            rename { s -> destFile.name }
+        }
+
+        while (!t.getDidWork()) sleep 100
+    }
+}
+
+artifacts {
+    'default' (tasks.downloadDelegate.destFile) {
+        builtBy tasks.downloadDelegate
+    }
+}
+
+build {
+    dependsOn downloadDelegate
+    //buildFile = downloadDelegate.outputs.files.singleFile
+}
